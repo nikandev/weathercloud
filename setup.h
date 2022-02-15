@@ -3,30 +3,29 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <FastLED.h>
 #include "wificredentials.h"
-#include "currentstate.h"
+#include "abstractlogic.h"
+#include "mainlogic.h"
+#include "resetlogic.h"
 
 class Setup
 {
     public:
         Setup();
         void run();
-        CurrentState currentState();
+        AbstractLogic* result();
     private:
-        WiFiServer _server;
+        AbstractLogic* _result;
         bool _isResetMode;
         int _timeZone;
-        String _foundNetworksHtml;
         void setupSerial();
         bool isResetMode();
-        void reactToReset();
+        void setupAP();
+        void processReset();
+        void processMain();
         void connectWifi(WifiCredentials credentials);
         void setupWifiCredentials();
-        String htmlSSIDInputForm();
-        void setupAP();
         void setupArduinoOTA();
-        
 };
 
 #endif

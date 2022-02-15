@@ -3,26 +3,19 @@
 
 #include <Arduino.h>
 #include "ledsettings.h"
-
-enum State
-{
-    Default = 0,
-    Sunny = 1,
-    Rainy = 2,
-    Night = 3
-}
+#include "ledcolor.h"
+#include "weatherdata.h"
 
 class Sun
 {
     public:
         Sun();
-        void setBrightness(int value);
+        void setBrightness(byte b);
         void setState(Temperatures t, int sunriseTimeUtc, int sunsetTimeUtc, int cloudPercentage);
-        LedColor color();
+        LedColor color() const;
     private:
-        State _s;
-        int _brightness;
+        byte _brightness;
         LedColor _color;
-}
+};
 
-#endif
+#endif // SUN_H

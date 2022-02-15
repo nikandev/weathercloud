@@ -3,29 +3,19 @@
 
 #include <Arduino.h>
 #include "ledsettings.h"
+#include "ledcolor.h"
 #include "weatherdata.h"
-
-enum State
-{
-    Default = 0,
-    Sunny = 1,
-    Rainy = 2,
-    Cloudy = 3,
-    Lightning = 4,
-    Snowing = 5
-}
 
 class Cloud
 {
     public:
         Cloud();
-        void setBrightness(int value);
+        void setBrightness(byte value);
         void setState(Rain r, Snow s, int cloudPercentage);
-        LedColor color();
+        LedColor color() const;
     private:
-        State _s;
-        int _brightness;
+        byte _brightness;
         LedColor _color;
-}
+};
 
-#endif
+#endif // CLOUD_H

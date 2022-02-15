@@ -1,13 +1,12 @@
 #include <ArduinoOTA.h>
 #include <time.h>
 #include "setup.h"
-#include "ledsettings.h"
 #include "timesettings.h"
 #include "credentialsmemory.h"
 
 #define RESET_BUTTON_PIN 4 // D2 - GPIO4 Нажатие - размыкание с земли, замыкание на 3v.
 
-Setup::Setup() : _server(80), _isResetMode(false)
+Setup::Setup() : _isResetMode(false)
 {
 }
 
@@ -17,37 +16,18 @@ void Setup::run()
 
     if (isResetMode())
     {
-        reactToReset();
-        return;
+        setupAP();
+        processReset();
     }
-
-    Serial.println("Normal mode is active");
-    WiFi.softAPdisconnect(true);
-
-    WifiCredentials fromMemory;
-    fromMemory = CredentialsMemory::read();
-
-    connectWifi(fromMemory);
-    setupArduinoOTA();
-    _server.begin();
-
-    CRGB leds[NUM_LEDS];
-    LEDS.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
-    FastLED.setBrightness(BRIGHTNESS);
-
-    TimeSettings ts;
-
-    configTime(ts.timeZone, ts.dst, "pool.ntp.org", "time.nist.gov");
-    Serial.println("Setup complete.");
+    else
+    {
+        processMain();
+    }
 }
 
-CurrentState Setup::currentState()
+AbstractLogic* Setup::result()
 {
-    CurrentState result;
-    result.isResetMode = _isResetMode;
-    result.wifiServer = _server;
-
-    return result;
+    return _result;
 }
 
 void Setup::setupSerial()
@@ -70,11 +50,44 @@ bool Setup::isResetMode()
     return false;
 }
 
-void Setup::reactToReset()
+void Setup::setupAP()
+{
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(100);
+
+    Serial.println("ssid: Cloud");
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("Cloud");
+
+    Serial.print("IP: ");
+    Serial.println(WiFi.softAPIP());
+}
+
+void Setup::processReset()
 {
     _isResetMode = true;
-    setupAP();
-    _server.begin();
+    _result = new ResetLogic();
+}
+
+void Setup::processMain()
+{
+    Serial.println("Normal mode is active");
+    WiFi.softAPdisconnect(true);
+
+    WifiCredentials fromMemory;
+    fromMemory = CredentialsMemory::read();
+
+    connectWifi(fromMemory);
+    setupArduinoOTA();
+
+    TimeSettings ts;
+
+    configTime(ts.timeZone, ts.dst, "pool.ntp.org", "time.nist.gov");
+
+    _result = new MainLogic();
+
+    Serial.println("Setup complete.");
 }
 
 void Setup::connectWifi(WifiCredentials credentials) // все работает
@@ -105,39 +118,6 @@ void Setup::setupWifiCredentials()
     Serial.print("Setting soft-AP ... ");
     Serial.println(WiFi.softAP("Cloud", "12345678") ? "Ready" : "Failed!");
     Serial.println("ssid: Cloud, password: 12345678");
-}
-
-void Setup::setupAP()
-{
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    delay(100);
-    int foundNetworkCount = WiFi.scanNetworks();
-    Serial.println("Near network scan completed");
-
-    Serial.println(foundNetworkCount ? "Networks found" : "No WiFi Networks found");
-
-    _foundNetworksHtml = "<ol>";
-
-    for (int i = 0; i < foundNetworkCount; ++i)
-    {
-        _foundNetworksHtml += "<li>";
-        _foundNetworksHtml += WiFi.SSID(i);
-        _foundNetworksHtml += " (";
-        _foundNetworksHtml += WiFi.RSSI(i);
-        _foundNetworksHtml += ")";
-        _foundNetworksHtml += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " " : "*";
-        _foundNetworksHtml += "</li>";
-    }
-
-    _foundNetworksHtml += "</ol>";
-
-    Serial.println("ssid: Cloud");
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP("Cloud");
-
-    Serial.print("IP: ");
-    Serial.println(WiFi.softAPIP());
 }
 
 void Setup::setupArduinoOTA() // Проверить

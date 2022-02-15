@@ -10,4 +10,4 @@ struct TimeSettings
     const int dst = 0; // DaylightSavingsTime
 };
 
-#endif
+#endif // TIMESETTINGS_H

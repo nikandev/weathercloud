@@ -1,14 +1,14 @@
 #include <Arduino.h>
 #include "setup.h"
-#include "logic.h"
+#include "abstractlogic.h"
 
-Logic* l;
+AbstractLogic* l;
 
 void setup()
 {
     Setup s;
     s.run();
-    l = new Logic(s.currentState());
+    l = s.result();
 }
 
 void loop()
